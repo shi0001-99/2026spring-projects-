@@ -209,3 +209,188 @@ void showUpgradeMenu() {
     cin.ignore();
     cin.get();
 }
+
+// 显示游戏界面
+void showGameScreen() {
+    system("cls");
+
+    // 状态栏
+    cout << "[第 " << currentDay << " 天] | ";
+    cout << "时间: " <<  currentTime << "s | ";
+    cout << "金币: " << currentGold << "\n";
+
+    int burritoVal = (shopLevel & 1) ? 30 : 20;
+    cout << "卷饼" << burritoVal << "金币/个    ";
+    cout << "可乐" << COLA_VALUE << "金币/杯    ";
+    cout << "薯条" << FRIES_VALUE << "金币/份\n";
+    cout << "----------------------------------------\n";
+
+    // 顾客订单区
+    cout << "顾客订单";
+    int maxCustomers = (shopLevel & 4) ? 3 : 1;
+    if (customerCount > 0) {
+        cout << ":\n";
+        for (int i = 0; i < customerCount && i < maxCustomers; i++) {
+            cout << "顾客" << i + 1 << " (耐心:" << customerPatience[i] << "s):\n";
+
+            if (customerWantsBurrito[i]) {
+                cout << "-卷饼需求: ";
+                if (customerBurritoNeed[0][i]) cout << "肉 ";
+                if (customerBurritoNeed[1][i]) cout << "黄瓜 ";
+                if (customerBurritoNeed[2][i]) cout << "沙司 ";
+                if (customerBurritoNeed[3][i]) cout << "薯条 ";
+                if (customerBurritoNeed[4][i]) cout << "番茄酱 ";
+                cout << "\n";
+            }
+
+            cout << "-小吃：";
+            if (customerWantsFries[i]) cout << "薯条 ";
+            if (customerWantsCola[i]) cout << "可乐 ";
+            cout << "\n";
+            
+        }
+    }
+    else {
+        cout << ": 等待顾客...\n";
+    }
+    cout << "----------------------------------------\n";
+
+    // 操作台
+    cout << "【卷饼台】 ";
+    switch (burritoStage) {
+    case 0: cout << "空"; break;
+    case 1: cout << "有饼"; break;
+    case 2: cout << "有料"; break;
+    case 3: cout << "已卷"; break;
+    case 4: cout << "已包"; break;
+    }
+
+    cout << " | 配料: [";
+    if (burritoIngredients[0]) cout << "肉";
+    if (burritoIngredients[1]) cout << "瓜";
+    if (burritoIngredients[2]) cout << "酱";
+    if (burritoIngredients[3]) cout << "薯";
+    if (burritoIngredients[4]) cout << "番";
+    cout << "] | ";
+
+    if (burritoStage < 3) cout << "未卷 | ";
+    if (burritoStage < 4) cout << "未包";
+    cout << "\n";
+
+    cout << "【小吃台】 ";
+    cout << "薯条:";
+    switch (friesStage) {
+    case 0: cout << "无"; break;
+    case 1: cout << "盒"; break;
+    case 2: cout << "满"; break;
+    }
+    cout << " | 可乐:";
+    switch (colaStage) {
+    case 0: cout << "无"; break;
+    case 1: cout << "杯"; break;
+    case 2: cout << "满"; break;
+    }
+    cout << "\n";
+    cout << "----------------------------------------\n";
+
+    // 库存状态区
+    cout << "[主料] 饼:" << setw(2) << inventory[BREAD];
+    cout << " 肉:" << setw(2) << inventory[MEAT] << "\n";
+    cout << "[配料] 瓜:" << setw(2) << inventory[CUCUMBER];
+    cout << " 酱:" << setw(2) << inventory[SAUCE];
+    cout << " 番:" << setw(2) << inventory[KETCHUP];
+    cout << " 薯配:" << setw(2) << inventory[FRIES_ING] << "\n";
+    cout << "[耗料] 纸:" << setw(2) << inventory[WRAPPER];
+    cout << " 盒:" << setw(2) << inventory[FRIES_BOX];
+    cout << " 杯:" << setw(2) << inventory[COLA_CUP] << "\n";
+    cout << "[饮料] 薯条:" << setw(2) << inventory[FRIES];
+    cout << " 可乐液:" << setw(2) << inventory[COLA] << "\n";
+    cout << "----------------------------------------\n";
+}
+
+// 显示帮助信息
+void showHelp() {
+    cout << "\n指令帮助:\n";
+    cout << "卷饼制作: [1]放饼 [2]加肉 [3]加黄瓜 [4]加沙司 [5]薯条料 [6]加番茄酱\n";
+    cout << "          [7]卷起 [8]包装 [9]给顾客\n";
+    cout << "小吃制作: [a]拿盒 [b]装薯条 [c]给顾客(薯条)\n";
+    cout << "          [d]拿杯 [e]接可乐 [f]给顾客(可乐)\n";
+    cout << "库存管理: [z]切肉 [x]炸薯条\n";
+    cout << "          [r]补面饼/纸 [t]补配料 [y]补盒子/杯子\n";
+    cout << "重置功能: [`]重置卷饼台 [~]重置小吃台\n";  // 新增
+    cout << "其他:     [0]结束本日 [h]显示帮助\n";
+}
+// 更新游戏状态
+void updateGame() {
+    if (currentTime > 0) {
+        currentTime--;
+    }
+
+    // 更新顾客耐心
+    for (int i = 0; i < customerCount; i++) {
+        if (customerPatience[i] > 0) {
+            customerPatience[i]--;
+            if (customerPatience[i] <= 0) {
+                cout << ">> 提示: 顾客" << i + 1 << "等不及离开了！\n";
+                // 移除顾客
+                for (int j = i; j < customerCount - 1; j++) {
+                    customerPatience[j] = customerPatience[j + 1];
+                    customerWantsBurrito[j] = customerWantsBurrito[j + 1];
+                    customerWantsFries[j] = customerWantsFries[j + 1];
+                    customerWantsCola[j] = customerWantsCola[j + 1];
+                    for (int k = 0; k < 5; k++) {
+                        customerBurritoNeed[k][j] = customerBurritoNeed[k][j + 1];
+                    }
+                }
+                customerCount--;
+                i--;
+            }
+        }
+    }
+
+    // 自动生成新顾客
+    int maxCustomers = (shopLevel & 4) ? 3 : 1;
+    if (customerCount < maxCustomers && rand() % 100 < 30) {
+        generateCustomer();
+    }
+
+    // 自动切肉机功能
+    if ((shopLevel & 2) && inventory[MEAT] == 0) {
+        inventory[MEAT] = INVENTORY_MAX;
+        cout << ">> 提示: 自动切肉机补满了肉库存！\n";
+    }
+}
+
+// 生成顾客需求
+void generateCustomer() {
+    int maxCustomers = (shopLevel & 4) ? 3 : 1;
+    if (customerCount >= maxCustomers) return;
+
+    int idx = customerCount;
+    customerPatience[idx] = MAX_PATIENCE;
+
+    // 随机生成需求
+    customerWantsBurrito[idx] = rand() % 2;  // 50%要卷饼
+    customerWantsFries[idx] = rand() % 2;    // 50%要薯条
+    customerWantsCola[idx] = rand() % 2;     // 50%要可乐
+
+    // 确保至少有一个需求
+    if (!customerWantsBurrito[idx] && !customerWantsFries[idx] && !customerWantsCola[idx]) {
+        customerWantsBurrito[idx] = 1;
+    }
+
+    // 卷饼需求
+    for (int i = 0; i < 5; i++) {
+        customerBurritoNeed[i][idx] = 0;
+    }
+    if (customerWantsBurrito[idx]) {
+        int ingCount = rand() % 5 + 1;  // 1-5种配料
+        for (int i = 0; i < ingCount; i++) {
+            int ing = rand() % 5;
+            customerBurritoNeed[ing][idx] = 1;
+        }
+    }
+
+    customerCount++;
+    cout << ">> 提示: 新顾客来了！\n";
+}
