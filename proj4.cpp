@@ -296,3 +296,205 @@ void modifyProduct() {
     }
     cout << "未找到ID为 " << id << " 的商品！\n";
 }
+void deleteProduct() {
+    showProducts();
+    int id;
+    cout << "输入要下架的商品ID: ";
+    cin >> id;
+    auto it = remove_if(products.begin(), products.end(), [id](const Product& p) { return p.id == id; });
+    if (it != products.end()) {
+        products.erase(it, products.end());
+        saveProducts();
+        cout << "商品已下架！\n";
+    }
+    else {
+        cout << "商品不存在！\n";
+    }
+}
+
+// ====================== 购物车 ======================
+void addToCart() {
+    if (!currentUser) { cout << "请先登录！\n"; return; }
+    showProducts();
+    int id, qty;
+    cout << "\n商品ID: "; cin >> id;
+    cout << "数量: "; cin >> qty;
+
+    for (auto& p : products) {
+        if (p.id == id) {
+            if (p.stock < qty) { cout << "库存不足！\n"; return; }
+            for (auto& item : currentCart) {
+                if (item.productId == id) {
+                    item.quantity += qty;
+                    cout << "购物车数量已更新！\n";
+                    return;
+                }
+            }
+            currentCart.push_back({ id, p.name, p.price, qty });
+            cout << "已加入购物车！\n";
+            return;
+        }
+    }
+    cout << "商品不存在！\n";
+}
+
+void showCart() {
+    if (currentCart.empty()) { cout << "购物车为空！\n"; return; }
+    cout << "\n=== 我的购物车 ===\n";
+    double total = 0;
+    cout << setw(5) << "ID" << setw(20) << "商品" << setw(10) << "单价"
+        << setw(8) << "数量" << setw(12) << "小计" << endl;
+    cout << string(65, '-') << endl;
+    for (const auto& item : currentCart) {
+        double sub = item.price * item.quantity;
+        total += sub;
+        cout << setw(5) << item.productId << setw(20) << item.productName
+            << setw(10) << item.price << setw(8) << item.quantity << setw(12) << sub << endl;
+    }
+    cout << "\n总计: " << fixed << setprecision(2) << total << " 元\n";
+}
+
+void modifyCartItem() {
+    if (currentCart.empty()) {
+        cout << "购物车为空！\n";
+        return;
+    }
+
+    showCart();
+
+    int id, newQty;
+    cout << "\n请输入要修改的商品ID: ";
+    cin >> id;
+    cout << "请输入新数量 (输入0或负数将删除该商品): ";
+    cin >> newQty;
+
+    // 查找并处理
+    auto it = currentCart.begin();
+    while (it != currentCart.end()) {
+        if (it->productId == id) {
+            if (newQty <= 0) {
+                cout << "已删除商品: " << it->productName << endl;
+                it = currentCart.erase(it);   // 删除该商品
+            } else {
+                it->quantity = newQty;
+                cout << "数量修改成功！" << endl;
+                ++it;
+            }
+            return;   // 找到后立即退出
+        }
+        ++it;
+    }
+
+    cout << "购物车中未找到该商品！\n";
+}
+void removeFromCart() {
+    showCart();
+    if (currentCart.empty()) return;
+    int id;
+    cout << "输入要删除的商品ID: "; cin >> id;
+    auto it = remove_if(currentCart.begin(), currentCart.end(), [id](const CartItem& c) { return c.productId == id; });
+    currentCart.erase(it, currentCart.end());
+    cout << "已删除！\n";
+}
+void clearCart() {
+    currentCart.clear();
+    cout << "购物车已清空！\n";
+}
+
+// ====================== 订单管理 ======================
+void checkout() {
+    if (currentCart.empty()) { cout << "购物车为空！\n"; return; }
+    showCart();
+    cout << "\n确认下单？(y/n): ";
+    char c; cin >> c;
+    if (c != 'y' && c != 'Y') return;
+
+    Order order;
+    order.orderId = nextOrderId++;
+    order.username = currentUser->username;
+    order.items = currentCart;
+    order.totalAmount = 0;
+    for (auto& item : order.items) order.totalAmount += item.price * item.quantity;
+    order.status = "待付款";
+    order.orderTime = getCurrentTime();
+    order.address = currentUser->address;
+
+    orders.push_back(order);
+
+    // 扣库存
+    for (auto& item : currentCart) {
+        for (auto& p : products) {
+            if (p.id == item.productId) {
+                p.stock -= item.quantity;
+                break;
+            }
+        }
+    }
+    currentCart.clear();
+    saveProducts();
+    cout << "下单成功！订单号: " << order.orderId << endl;
+}
+
+void showMyOrders() {
+    cout << "\n=== 我的订单 ===\n";
+    bool has = false;
+    for (const auto& o : orders) {
+        if (o.username == currentUser->username) {
+            has = true;
+            cout << "订单号: " << o.orderId << "  金额: " << o.totalAmount
+                << "  状态: " << o.status << "  时间: " << o.orderTime << endl;
+        }
+    }
+    if (!has) cout << "暂无订单。\n";
+}
+
+void showOrderDetail(int orderId) {
+    for (const auto& o : orders) {
+        if (o.orderId == orderId && o.username == currentUser->username) {
+            cout << "\n=== 订单详情 ===\n订单号: " << o.orderId << endl;
+            cout << "时间: " << o.orderTime << endl;
+            cout << "地址: " << o.address << endl;
+            cout << "状态: " << o.status << endl;
+            cout << "商品列表:\n";
+            for (const auto& item : o.items) {
+                cout << "  " << item.productName << " x" << item.quantity << "  小计:"
+                    << item.price * item.quantity << endl;
+            }
+            cout << "总金额: " << o.totalAmount << " 元\n";
+            return;
+        }
+    }
+    cout << "订单不存在！\n";
+}
+// ====================== 模拟支付 ======================
+void simulatePayment(int orderId) {
+    if (!currentUser) {
+        cout << "请先登录！\n";
+        return;
+    }
+
+    for (auto& o : orders) {
+        if (o.orderId == orderId && o.username == currentUser->username) {
+            if (o.status != "待付款") {
+                cout << "该订单当前状态为：" << o.status << "，无法支付！\n";
+                return;
+            }
+
+            cout << "\n=== 模拟支付 ===\n";
+            cout << "订单号: " << orderId << "  总金额: " << o.totalAmount << " 元\n";
+            cout << "请输入支付密码 (6位数字): ";
+            string payPwd;
+            cin >> payPwd;
+
+            if (payPwd.length() >= 4) {   // 简单验证
+                o.status = "已支付";
+                cout << "支付成功！感谢您的购买。\n";
+            }
+            else {
+                cout << "支付密码过短，支付失败。\n";
+            }
+            return;
+        }
+    }
+    cout << "未找到该订单！\n";
+}
