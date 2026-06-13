@@ -277,3 +277,88 @@ void studySession(bool isRandom, bool engToChn) {
     MessageBox(GetHWnd(), _T("本次背诵结束！"), _T("完成"), MB_OK);
 }
 
+int selectRange() {
+    BeginBatchDraw();                    // 开启双缓冲
+    setbkcolor(RGB(245, 245, 245));
+
+    while (true) {
+        cleardevice();
+
+        settextcolor(BLACK);
+        settextstyle(40, 0, _T("宋体"));
+        outtextxy(280, 80, _T("选择单词范围"));
+
+        drawButton(250, 170, 300, 70, _T("小学单词"), RGB(0, 102, 204), BLACK);
+        drawButton(250, 260, 300, 70, _T("初中单词"), RGB(0, 102, 204), BLACK);
+        drawButton(250, 350, 300, 70, _T("高中单词"), RGB(0, 102, 204), BLACK);
+        drawButton(250, 450, 300, 60, _T("返回主菜单"), RGB(0, 102, 204), BLACK);
+
+        FlushBatchDraw();                // 必须刷新画面
+
+        ExMessage msg = getmessage(EX_MOUSE);
+        if (msg.message == WM_LBUTTONDOWN) {
+            int x = msg.x, y = msg.y;
+
+            if (isClick(x, y, 250, 170, 300, 70)) { EndBatchDraw(); return 1; } // 小学
+            if (isClick(x, y, 250, 260, 300, 70)) { EndBatchDraw(); return 2; } // 初中
+            if (isClick(x, y, 250, 350, 300, 70)) { EndBatchDraw(); return 3; } // 高中
+            if (isClick(x, y, 250, 450, 300, 60)) { EndBatchDraw(); return 0; } // 返回
+        }
+    }
+}
+
+void selectStudyMode(bool& isRandom, bool& engToChn) {
+    setbkcolor(RGB(245, 245, 245));
+    BeginBatchDraw();                    
+
+    bool selectedRandom = false;
+    bool selectedEngToChn = true;
+
+    while (true) {
+        cleardevice();
+
+        settextcolor(BLACK);
+        settextstyle(45, 0, _T("宋体"));
+        outtextxy(290, 70, _T("背诵设置"));
+
+        // ================ 顺序 / 随机 ================
+        drawButton(220, 170, 360, 70, _T("顺序背诵"),
+            selectedRandom ? RGB(0, 102, 204) : RGB(0, 153, 0), BLACK);
+
+        drawButton(220, 260, 360, 70, _T("随机背诵"),
+            selectedRandom ? RGB(0, 153, 0) : RGB(0, 102, 204), BLACK);
+
+        // ================ 英中 / 中英 ================
+        drawButton(200, 360, 180, 65, _T("英 → 中"),
+            selectedEngToChn ? RGB(0, 153, 0) : RGB(0, 102, 204), BLACK);
+
+        drawButton(420, 360, 180, 65, _T("中 → 英"),
+            selectedEngToChn ? RGB(0, 102, 204) : RGB(0, 153, 0), BLACK);
+
+        drawButton(280, 460, 240, 65, _T("开始背诵"), RGB(34, 139, 34), BLACK);
+
+        FlushBatchDraw();   // 刷新画面
+
+        // ================ 鼠标点击处理 ================
+        ExMessage msg = getmessage(EX_MOUSE);
+        if (msg.message == WM_LBUTTONDOWN) {
+            int x = msg.x, y = msg.y;
+
+            // 顺序 / 随机选择
+            if (isClick(x, y, 220, 170, 360, 70)) selectedRandom = false;
+            if (isClick(x, y, 220, 260, 360, 70)) selectedRandom = true;
+
+            // 方向选择
+            if (isClick(x, y, 200, 360, 180, 65)) selectedEngToChn = true;
+            if (isClick(x, y, 420, 360, 180, 65)) selectedEngToChn = false;
+
+            // 开始背诵
+            if (isClick(x, y, 280, 460, 240, 65)) {
+                isRandom = selectedRandom;
+                engToChn = selectedEngToChn;
+                EndBatchDraw();
+                return;
+            }
+        }
+    }
+}
