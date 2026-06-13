@@ -172,3 +172,127 @@ void logout() {
     currentUser = nullptr;
     currentCart.clear();
 }
+// ====================== 商品管理 ======================
+void showProducts() {
+    cout << "\n=== 商品列表 ===\n";
+    cout << setw(5) << "ID" << setw(20) << "名称" << setw(12) << "分类"
+        << setw(10) << "价格" << setw(8) << "库存" << endl;
+    cout << string(65, '-') << endl;
+    for (const auto& p : products) {
+        cout << setw(5) << p.id << setw(20) << p.name << setw(12) << p.category
+            << setw(10) << fixed << setprecision(2) << p.price
+            << setw(8) << p.stock << endl;
+    }
+}
+
+void showProductDetail(int id) {
+    for (const auto& p : products) {
+        if (p.id == id) {
+            cout << "\n=== 商品详情 ===\n";
+            cout << "名称: " << p.name << endl;
+            cout << "分类: " << p.category << endl;
+            cout << "价格: " << p.price << " 元" << endl;
+            cout << "库存: " << p.stock << endl;
+            cout << "描述: " << p.description << endl;
+            return;
+        }
+    }
+    cout << "未找到该商品！\n";
+}
+
+void searchProducts() {
+    string keyword;
+    cout << "请输入搜索关键词: ";
+    cin.ignore();
+    getline(cin, keyword);
+    cout << "\n=== 搜索结果 ===\n";
+    bool found = false;
+    for (const auto& p : products) {
+        if (p.name.find(keyword) != string::npos || p.description.find(keyword) != string::npos) {
+            cout << p.id << ". " << p.name << " - " << p.price << "元\n";
+            found = true;
+        }
+    }
+    if (!found) cout << "未找到匹配商品。\n";
+}
+
+void filterByCategory() {
+    string cat;
+    cout << "请输入分类 (数码/服装/食品/美妆): ";
+    cin >> cat;
+    cout << "\n=== " << cat << " 分类商品 ===\n";
+    bool found = false;
+    for (const auto& p : products) {
+        if (p.category == cat) {
+            cout << p.id << ". " << p.name << " - " << p.price << "元 (库存:" << p.stock << ")\n";
+            found = true;
+        }
+    }
+    if (!found) cout << "该分类暂无商品。\n";
+}
+
+void addProduct() {
+    Product p;
+    p.id = nextProductId++;
+    cout << "商品名称: "; cin.ignore(); getline(cin, p.name);
+    cout << "分类: "; getline(cin, p.category);
+    cout << "价格: "; cin >> p.price;
+    cout << "库存: "; cin >> p.stock;
+    cin.ignore();
+    cout << "描述: "; getline(cin, p.description);
+    products.push_back(p);
+    saveProducts();
+    cout << "商品添加成功！\n";
+}
+
+void modifyProduct() {
+    showProducts();
+    if (products.empty()) {
+        cout << "当前没有商品！\n";
+        return;
+    }
+
+    int id;
+    cout << "\n请输入要修改的商品ID: ";
+    cin >> id;
+
+    for (auto& p : products) {
+        if (p.id == id) {
+            cout << "\n=== 当前商品信息 ===\n";
+            cout << "名称: " << p.name << endl;
+            cout << "分类: " << p.category << endl;
+            cout << "价格: " << p.price << " 元" << endl;
+            cout << "库存: " << p.stock << endl;
+            cout << "描述: " << p.description << endl;
+
+            cout << "\n=== 修改商品信息（回车跳过不修改） ===\n";
+
+            cin.ignore();
+            cout << "新名称: ";
+            string temp;
+            getline(cin, temp);
+            if (!temp.empty()) p.name = temp;
+
+            cout << "新分类: ";
+            getline(cin, temp);
+            if (!temp.empty()) p.category = temp;
+
+            cout << "新价格: ";
+            getline(cin, temp);
+            if (!temp.empty()) p.price = stod(temp);
+
+            cout << "新库存（可增加数量）: ";
+            getline(cin, temp);
+            if (!temp.empty()) p.stock = stoi(temp);
+
+            cout << "新描述: ";
+            getline(cin, temp);
+            if (!temp.empty()) p.description = temp;
+
+            saveProducts();
+            cout << "\n商品信息修改成功！\n";
+            return;
+        }
+    }
+    cout << "未找到ID为 " << id << " 的商品！\n";
+}
