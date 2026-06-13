@@ -394,3 +394,123 @@ void generateCustomer() {
     customerCount++;
     cout << ">> 提示: 新顾客来了！\n";
 }
+
+// 卷饼制作步骤
+bool makeBurritoStep(int step) {
+    switch (step) {
+    case 1: // 放饼
+        if (burritoStage == 0 && inventory[BREAD] > 0) {
+            inventory[BREAD]--;
+            burritoStage = 1;  // 有饼状态
+            return true;
+        }
+        break;
+
+    case 2: // 加肉
+        if ((burritoStage == 1 || burritoStage == 2) && inventory[MEAT] > 0) {
+            inventory[MEAT]--;
+            burritoIngredients[0] = 1;
+            if (burritoStage == 1) burritoStage = 2;  // 第一次加料才改状态
+            return true;
+        }
+        break;
+
+    case 3: // 加黄瓜
+        if ((burritoStage == 1 || burritoStage == 2) && inventory[CUCUMBER] > 0) {
+            inventory[CUCUMBER]--;
+            burritoIngredients[1] = 1;
+            if (burritoStage == 1) burritoStage = 2;
+            return true;
+        }
+        break;
+
+    case 4: // 加沙司
+        if ((burritoStage == 1 || burritoStage == 2) && inventory[SAUCE] > 0) {
+            inventory[SAUCE]--;
+            burritoIngredients[2] = 1;
+            if (burritoStage == 1) burritoStage = 2;
+            return true;
+        }
+        break;
+
+    case 5: // 薯条料
+        if ((burritoStage == 1 || burritoStage == 2) && inventory[FRIES_ING] > 0) {
+            inventory[FRIES_ING]--;
+            burritoIngredients[3] = 1;
+            if (burritoStage == 1) burritoStage = 2;
+            return true;
+        }
+        break;
+
+    case 6: // 番茄酱
+        if ((burritoStage == 1 || burritoStage == 2) && inventory[KETCHUP] > 0) {
+            inventory[KETCHUP]--;
+            burritoIngredients[4] = 1;
+            if (burritoStage == 1) burritoStage = 2;
+            return true;
+        }
+        break;
+
+    case 7: // 卷起
+        if (burritoStage == 2) {  // 有料状态才能卷
+            burritoStage = 3;
+            return true;
+        }
+        break;
+
+    case 8: // 包装
+        if (burritoStage == 3 && inventory[WRAPPER] > 0) {
+            inventory[WRAPPER]--;
+            burritoStage = 4;
+            return true;
+        }
+        break;
+    }
+    return false;
+}
+
+// 薯条制作步骤
+bool makeFriesStep(int step) {
+    switch (step) {
+    case 1: // 拿盒
+        if (friesStage == 0 && inventory[FRIES_BOX] > 0) {
+            inventory[FRIES_BOX]--;
+            friesStage = 1;
+            return true;
+        }
+        break;
+    case 2: // 装薯条
+        if (friesStage == 1 && inventory[FRIES] > 0) {
+            // 正确的逻辑：从成品薯条库存中取出
+            if (inventory[FRIES] > 0) {
+                inventory[FRIES]--;
+                friesStage = 2;
+                return true;
+            }
+        }
+        break;
+    }
+    return false;
+}
+
+// 可乐制作步骤
+bool makeColaStep(int step) {
+    switch (step) {
+    case 1: // 拿杯
+        if (colaStage == 0 && inventory[COLA_CUP] > 0) {
+            inventory[COLA_CUP]--;
+            colaStage = 1;
+            return true;
+        }
+        break;
+    case 2: // 接可乐
+        if (colaStage == 1 && inventory[COLA] > 0) {
+            inventory[COLA]--;
+            colaStage = 2;
+            return true;
+        }
+        break;
+    }
+    return false;
+}
+
