@@ -498,3 +498,88 @@ void simulatePayment(int orderId) {
     }
     cout << "未找到该订单！\n";
 }
+// ====================== 取消订单 ======================
+void cancelOrder(int orderId) {
+    if (!currentUser) {
+        cout << "请先登录！\n";
+        return;
+    }
+
+    for (auto& o : orders) {
+        if (o.orderId == orderId && o.username == currentUser->username) {
+            if (o.status == "待付款" || o.status == "已取消") {
+
+                // ==================== 恢复库存 ====================
+                for (const auto& item : o.items) {
+                    for (auto& p : products) {
+                        if (p.id == item.productId) {
+                            p.stock += item.quantity;   // 恢复库存
+                            break;
+                        }
+                    }
+                }
+                // ================================================
+
+                if (o.status != "已取消") {
+                    o.status = "已取消";
+                    saveProducts();   // 保存更新后的库存
+                    cout << "订单已成功取消！\n";
+                }
+                else {
+                    cout << "该订单已取消。\n";
+                }
+            }
+            else {
+                cout << "只有【待付款】状态的订单才能取消，当前状态：" << o.status << endl;
+            }
+            return;
+        }
+    }
+    cout << "未找到该订单！\n";
+}
+
+// ====================== 确认收货 ======================
+void confirmReceipt(int orderId) {
+    if (!currentUser) {
+        cout << "请先登录！\n";
+        return;
+    }
+
+    for (auto& o : orders) {
+        if (o.orderId == orderId && o.username == currentUser->username) {
+            if (o.status == "已支付") {
+                o.status = "已完成";
+                cout << "确认收货成功！订单已完成。\n";
+            }
+            else if (o.status == "已完成") {
+                cout << "该订单已完成。\n";
+            }
+            else {
+                cout << "当前状态为：" << o.status << "，无法确认收货。\n";
+            }
+            return;
+        }
+    }
+    cout << "未找到该订单！\n";
+}
+// ====================== 管理员菜单 ======================
+void adminMenu() {
+    while (true) {
+        clearScreen();
+        cout << "========== 管理员后台 ==========\n";
+        cout << "1. 添加商品\n";
+        cout << "2. 修改商品\n";
+        cout << "3. 下架商品\n";
+        cout << "4. 查看所有商品\n";
+        cout << "5. 返回\n";
+        cout << "请选择: ";
+        int choice; cin >> choice;
+        if (choice == 1) addProduct();
+        else if (choice == 2) modifyProduct();
+        else if (choice == 3) deleteProduct();
+        else if (choice == 4) showProducts();
+        else if (choice == 5) break;
+        else cout << "输入错误！\n";
+        pause();
+    }
+}
