@@ -362,3 +362,108 @@ void selectStudyMode(bool& isRandom, bool& engToChn) {
         }
     }
 }
+int main() {
+    loadAllWords();
+
+    initgraph(640, 480);
+    setbkcolor(RGB(240, 248, 255));
+
+    bool logged = false;
+    while (!logged) {
+        cleardevice();
+        settextstyle(42, 0, _T("宋体"));
+        settextcolor(BLACK);                    
+        outtextxy(220, 70, _T("用户登录"));
+
+        drawButton(200, 160, 240, 60, _T("登录"), RGB(0, 102, 204), BLACK);
+        drawButton(200, 240, 240, 60, _T("注册"), RGB(0, 102, 204), BLACK);
+        drawButton(200, 320, 240, 60, _T("退出"), RGB(0, 102, 204), BLACK);
+
+        ExMessage msg;
+        while (true) {
+            msg = getmessage(EX_MOUSE);
+            if (msg.message == WM_LBUTTONDOWN) {
+                int mx = msg.x, my = msg.y;
+
+                if (isClick(mx, my, 200, 160, 240, 60)) { // 登录
+                    TCHAR u[64] = { 0 }, p[64] = { 0 };
+                    InputBox(u, 60, _T("请输入用户名"), _T("登录"));
+                    InputBox(p, 60, _T("请输入密码"), _T("登录"));
+                    if (login(Tstr_to_str(u), Tstr_to_str(p))) logged = true;
+                    else MessageBox(GetHWnd(), _T("用户名或密码错误！"), _T("登录失败"), MB_OK);
+                }
+                else if (isClick(mx, my, 200, 240, 240, 60)) { // 注册
+                    TCHAR u[64] = { 0 }, p[64] = { 0 };
+                    InputBox(u, 60, _T("请输入新用户名"), _T("注册"));
+                    InputBox(p, 60, _T("请输入密码"), _T("注册"));
+                    if (registerUser(Tstr_to_str(u), Tstr_to_str(p))) logged = true;
+                    else MessageBox(GetHWnd(), _T("用户名已存在！"), _T("注册失败"), MB_OK);
+                }
+                else if (isClick(mx, my, 200, 320, 240, 60)) {
+                    closegraph();
+                    return 0;
+                }
+                break;
+            }
+        }
+    }
+
+    // 主循环
+    while (true) {
+        int choice = mainMenu();
+
+        if (choice == 1) {   // 开始背单词
+            int range = selectRange();     // 调用新函数
+            if (range == 0) continue;
+
+            if (range == 1) currentList = elemWords;
+            else if (range == 2) currentList = juniorWords;
+            else if (range == 3) currentList = seniorWords;
+
+            // 选择背诵模式
+            bool isRandom = false, engToChn = true;
+            selectStudyMode(isRandom, engToChn);
+
+            studySession(isRandom, engToChn);
+        }
+        else if (choice == 2) {  // 我的错题本
+            if (currentUser.empty()) {
+                MessageBox(GetHWnd(), _T("请先登录！"), _T("提示"), MB_OK);
+                continue;
+            }
+
+            loadUserWrongBook(currentUser);
+            vector<Word> toReview = userWrongBooks[currentUser];
+            if (toReview.empty()) toReview = wrongList;
+
+            if (toReview.empty()) {
+                MessageBox(GetHWnd(), _T("暂无错题记录！\n先去背单词吧~"), _T("错题本"), MB_OK);
+                continue;
+            }
+
+           
+            currentList = toReview;
+
+            bool isRandom = false;
+            bool engToChn = true;
+
+            
+            selectStudyMode(isRandom, engToChn);
+
+            // 开始错题复习
+            studySession(isRandom, engToChn);
+           
+        }
+        else if (choice == 3) {
+            currentUser = "";
+            closegraph();
+            main();
+            return 0;
+        }
+        else if (choice == 4) {
+            closegraph();
+            break;
+        }
+    }
+    return 0;
+}
