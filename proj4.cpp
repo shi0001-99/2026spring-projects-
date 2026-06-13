@@ -722,3 +722,98 @@ void loadUsers() {
     }
     file.close();
 }
+// ====================== 商品文件操作======================
+void saveProducts() {
+    ofstream file("products.txt");
+    for (const auto& p : products) {
+        file << p.id << "|"
+            << p.name << "|"
+            << p.category << "|"
+            << p.price << "|"
+            << p.stock << "|"
+            << p.description << endl;
+    }
+    file.close();
+}
+
+void loadProducts() {
+    products.clear();
+    ifstream file("products.txt");
+    string line;
+
+    while (getline(file, line)) {
+        if (line.empty()) continue;
+
+        stringstream ss(line);
+        Product p;
+        string temp;
+
+        // 按 | 分割读取
+        getline(ss, temp, '|'); p.id = stoi(temp);
+        getline(ss, p.name, '|');
+        getline(ss, p.category, '|');
+        getline(ss, temp, '|'); p.price = stod(temp);      // 关键修复
+        getline(ss, temp, '|'); p.stock = stoi(temp);
+        getline(ss, p.description, '|');
+
+        products.push_back(p);
+        if (p.id >= nextProductId) nextProductId = p.id + 1;
+    }
+    file.close();
+}
+
+// ====================== 购物车文件操作 ======================
+void saveCart() {
+    if (!currentUser) return;
+    ofstream file("cart_" + currentUser->username + ".txt");
+    for (const auto& item : currentCart) {
+        file << item.productId << "|"
+            << item.productName << "|"
+            << item.price << "|"
+            << item.quantity << endl;
+    }
+    file.close();
+}
+
+void loadCart() {
+    if (!currentUser) return;
+    currentCart.clear();
+    ifstream file("cart_" + currentUser->username + ".txt");
+    string line;
+    while (getline(file, line)) {
+        if (line.empty()) continue;
+        stringstream ss(line);
+        CartItem item;
+        string temp;
+        getline(ss, temp, '|'); item.productId = stoi(temp);
+        getline(ss, item.productName, '|');
+        getline(ss, temp, '|'); item.price = stod(temp);
+        getline(ss, temp, '|'); item.quantity = stoi(temp);
+        currentCart.push_back(item);
+    }
+    file.close();
+}
+
+void loadOrders() {  }
+void saveOrders() {  }
+
+int main() {
+    loadUsers();
+    loadProducts();
+    loadDefaultProducts();
+    bool hasAdmin = false;
+    for (const auto& u : users) {
+        if (u.username == "admin") {
+            hasAdmin = true;
+            break;
+        }
+    }
+    if (!hasAdmin) {
+        users.push_back({ "admin", "admin123", "13800138000", "默认地址", true });
+        saveUsers();
+        cout << "已创建默认管理员账号：admin / admin123\n";
+    }
+
+    mainMenu();
+    return 0;
+}
