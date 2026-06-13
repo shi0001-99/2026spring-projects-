@@ -583,3 +583,142 @@ void adminMenu() {
         pause();
     }
 }
+// ====================== 用户菜单 ======================
+void userMenu() {
+    while (true) {
+        clearScreen();
+        cout << "========== 欢迎 " << currentUser->username << " ==========\n";
+        cout << "1. 浏览所有商品\n";
+        cout << "2. 搜索商品\n";
+        cout << "3. 按分类查看\n";
+        cout << "4. 商品详情\n";
+        cout << "5. 添加到购物车\n";
+        cout << "6. 查看购物车\n";
+        cout << "7. 修改购物车\n";
+        cout << "8. 删除购物车商品\n";
+        cout << "9. 清空购物车\n";
+        cout << "10. 结算下单\n";
+        cout << "11. 我的订单\n";
+        cout << "12. 支付订单\n";          
+        cout << "13. 取消订单\n";           
+        cout << "14. 确认收货\n";           
+        cout << "15. 个人信息\n";
+        cout << "16. 修改个人信息\n";
+        cout << "0. 退出登录\n";
+        cout << "请选择: ";
+        
+        int choice; cin >> choice;
+
+        if (choice == 1) showProducts();
+        else if (choice == 2) searchProducts();
+        else if (choice == 3) filterByCategory();
+        else if (choice == 4) { int id; cout << "商品ID: "; cin >> id; showProductDetail(id); }
+        else if (choice == 5) addToCart();
+        else if (choice == 6) showCart();
+        else if (choice == 7) modifyCartItem();
+        else if (choice == 8) removeFromCart();
+        else if (choice == 9) clearCart();
+        else if (choice == 10) checkout();
+        else if (choice == 11) showMyOrders();
+        else if (choice == 12) {
+            int id;
+            cout << "请输入要支付的订单号: ";
+            cin >> id;
+            simulatePayment(id);
+        }
+        else if (choice == 13) {
+            int id;
+            cout << "请输入要取消的订单号: ";
+            cin >> id;
+            cancelOrder(id);
+        }
+        else if (choice == 14) {
+            int id;
+            cout << "请输入要确认收货的订单号: ";
+            cin >> id;
+            confirmReceipt(id);
+        }
+        else if (choice == 15) showProfile();
+        else if (choice == 16) modifyProfile();
+        else if (choice == 0) { logout(); break; }
+        else cout << "输入错误！\n";
+        pause();
+    }
+}
+
+// ====================== 主菜单 ======================
+void mainMenu() {
+    while (true) {
+        clearScreen();
+        cout << "========== 我的网购小店 ==========\n";
+        cout << "1. 用户注册\n";
+        cout << "2. 用户登录\n";
+        cout << "3. 游客浏览商品\n";
+        cout << "0. 退出程序\n";
+        cout << "==================================\n";
+        cout << "请选择: ";
+        int choice; cin >> choice;
+
+        if (choice == 1) registerUser();
+        else if (choice == 2) {
+            if (login()) {
+                if (currentUser && currentUser->isAdmin) {
+                    adminMenu();        // 进入管理员菜单
+                }
+                else {
+                    userMenu();         // 普通用户菜单
+                }
+            }
+        }
+        else if (choice == 3) showProducts();
+        else if (choice == 0) {
+            if (currentUser) {
+                saveCart();        
+            }
+            saveProducts();
+            saveUsers();
+            cout << "感谢使用，再见！\n";
+            break;
+        }
+        pause();
+    }
+}
+
+// ====================== 文件实现 ======================
+void saveUsers() {
+    ofstream file("users.txt");
+    for (const auto& u : users) {
+        file << u.username << "|"
+            << u.password << "|"
+            << u.phone << "|"
+            << u.address << "|"
+            << (u.isAdmin ? "1" : "0") << endl;
+    }
+    file.close();
+}
+
+void loadUsers() {
+    users.clear();
+    ifstream file("users.txt");
+    string line;
+
+    while (getline(file, line)) {
+        if (line.empty()) continue;
+        stringstream ss(line);
+        User u;
+        string temp, isAdminStr;
+
+        getline(ss, u.username, '|');
+        getline(ss, u.password, '|');
+        getline(ss, u.phone, '|');
+        getline(ss, u.address, '|');
+        getline(ss, isAdminStr, '|');
+
+        u.isAdmin = (isAdminStr == "1");
+
+        if (!u.username.empty()) {
+            users.push_back(u);
+        }
+    }
+    file.close();
+}
