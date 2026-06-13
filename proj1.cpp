@@ -514,3 +514,84 @@ bool makeColaStep(int step) {
     return false;
 }
 
+// 服务顾客
+bool serveCustomer(int custId) {
+    if (custId < 0 || custId >= customerCount) return false;
+
+    bool burritoOK = true;
+    bool friesOK = true;
+    bool colaOK = true;
+
+    // 检查卷饼
+    if (customerWantsBurrito[custId]) {
+        if (burritoStage != 4) {
+            burritoOK = false;
+        }
+        else {
+            for (int i = 0; i < 5; i++) {
+                if (customerBurritoNeed[i][custId] && !burritoIngredients[i]) {
+                    burritoOK = false;
+                    break;
+                }
+            }
+        }
+    }
+
+    // 检查薯条
+    if (customerWantsFries[custId]) {
+        if (friesStage != 2) friesOK = false;
+    }
+
+    // 检查可乐
+    if (customerWantsCola[custId]) {
+        if (colaStage != 2) colaOK = false;  
+    }
+
+    // 计算金币
+    int earned = 0;
+    if (burritoOK && customerWantsBurrito[custId]) {
+        earned += (shopLevel & 1) ? 30 : 20;
+        burritoStage = 0;
+        for (int i = 0; i < 5; i++) burritoIngredients[i] = 0;
+    }
+    if (friesOK && customerWantsFries[custId]) {
+        earned += FRIES_VALUE;
+        friesStage = 0;
+    }
+    if (colaOK && customerWantsCola[custId]) {
+        earned += COLA_VALUE;
+        colaStage = 0;
+    }
+
+    if (earned > 0) {
+        currentGold += earned;
+        totalGold += earned;
+
+        // 移除顾客
+        for (int i = custId; i < customerCount - 1; i++) {
+            customerPatience[i] = customerPatience[i + 1];
+            customerWantsBurrito[i] = customerWantsBurrito[i + 1];
+            customerWantsFries[i] = customerWantsFries[i + 1];
+            customerWantsCola[i] = customerWantsCola[i + 1];
+            for (int j = 0; j < 5; j++) {
+                customerBurritoNeed[j][i] = customerBurritoNeed[j][i + 1];
+            }
+        }
+        customerCount--;
+
+        return true;
+    }
+    return false;
+}
+
+// 切肉
+void cutMeat() {
+    if (inventory[MEAT] == 0) {
+        inventory[MEAT] = INVENTORY_MAX;
+        cout << "肉已切好补满！\n";
+    }
+    else {
+        cout << "肉还有库存，不需要切！\n";
+    }
+}
+
