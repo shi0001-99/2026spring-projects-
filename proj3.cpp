@@ -129,3 +129,151 @@ bool isClick(int mx, int my, int x, int y, int w, int h) {
     return mx >= x && mx <= x + w && my >= y && my <= y + h;
 }
 
+int mainMenu() {
+    initgraph(800, 600);
+    setbkcolor(RGB(245, 245, 245));
+
+    BeginBatchDraw();        
+
+    while (true) {
+        cleardevice();
+
+        settextcolor(BLACK);
+        settextstyle(52, 0, _T("宋体"));
+        outtextxy(240, 70, _T("背单词系统"));
+
+        drawButton(250, 180, 300, 70, _T("开始背单词"), RGB(0, 102, 204), BLACK);
+        drawButton(250, 270, 300, 70, _T("我的错题本"), RGB(0, 102, 204), BLACK);
+        drawButton(250, 360, 300, 70, _T("退出登录"), RGB(0, 102, 204), BLACK);
+        drawButton(250, 450, 300, 70, _T("退出程序"), RGB(0, 102, 204), BLACK);
+
+        FlushBatchDraw();   
+
+        ExMessage msg = getmessage(EX_MOUSE);
+        if (msg.message == WM_LBUTTONDOWN) {
+            int mx = msg.x, my = msg.y;
+            if (isClick(mx, my, 250, 180, 300, 70)) return 1;
+            if (isClick(mx, my, 250, 270, 300, 70)) return 2;
+            if (isClick(mx, my, 250, 360, 300, 70)) return 3;
+            if (isClick(mx, my, 250, 450, 300, 70)) return 4;
+        }
+    }
+}
+
+
+void studySession(bool isRandom, bool engToChn) {
+    if (currentList.empty()) {
+        MessageBox(GetHWnd(), _T("当前没有单词！"), _T("提示"), MB_OK);
+        return;
+    }
+
+    vector<int> indices(currentList.size());
+    for (int i = 0; i < currentList.size(); ++i) indices[i] = i;
+
+    if (isRandom) {
+        srand((unsigned)time(0));
+        random_shuffle(indices.begin(), indices.end());
+    }
+
+    BeginBatchDraw();
+
+    for (size_t i = 0; i < indices.size(); ++i) {
+        cleardevice();
+
+        int idx = indices[i];
+        const Word& w = currentList[idx];
+
+        settextcolor(BLACK);
+        settextstyle(28, 0, _T("宋体"));
+        outtextxy(50, 40, (_T("进度: ") + to_string(i + 1) + _T("/") + to_string(indices.size())).c_str());
+
+        // 生成选项
+        vector<string> options;
+        options.push_back(engToChn ? w.chn : w.eng);
+
+        vector<int> wrongIdx;
+        for (int j = 0; j < currentList.size() && wrongIdx.size() < 30; ++j) {
+            if (j == idx) continue;
+            wrongIdx.push_back(j);
+        }
+        random_shuffle(wrongIdx.begin(), wrongIdx.end());
+
+        for (int j = 0; j < 3 && j < wrongIdx.size(); ++j) {
+            options.push_back(engToChn ? currentList[wrongIdx[j]].chn : currentList[wrongIdx[j]].eng);
+        }
+        random_shuffle(options.begin(), options.end());
+
+        // 显示题目
+        settextstyle(30, 0, _T("宋体"));
+        if (engToChn) {
+            outtextxy(80, 120, (_T("请选择 “") + w.eng + _T("” 的中文意思：")).c_str());
+        }
+        else {
+            outtextxy(80, 120, (_T("请选择 “") + w.chn + _T("” 的英文：")).c_str());
+        }
+
+        int btnY[4] = { 220, 290, 360, 430 };
+        int correctIndex = -1;
+        for (int j = 0; j < 4; ++j) {
+            if (options[j] == (engToChn ? w.chn : w.eng)) correctIndex = j;
+            drawButton(140, btnY[j], 520, 58, options[j].c_str(), RGB(0, 102, 204), BLACK);
+        }
+
+        FlushBatchDraw();
+
+        // 等待选择
+        bool answered = false;
+        while (!answered) {
+            ExMessage msg = getmessage(EX_MOUSE);
+            if (msg.message == WM_LBUTTONDOWN) {
+                for (int j = 0; j < 4; ++j) {
+                    if (isClick(msg.x, msg.y, 140, btnY[j], 520, 58)) {
+                        bool isCorrect = (j == correctIndex);
+
+                        if (isCorrect) {
+                            settextcolor(GREEN);
+                            outtextxy(200, 510, _T("正确！"));
+                        }
+                        else {
+                            settextcolor(RED);
+                            outtextxy(200, 510, _T("错误！"));
+
+                         
+                            bool alreadyExist = false;
+                            for (const auto& ew : userWrongBooks[currentUser]) {
+                                if (ew.eng == w.eng) {
+                                    alreadyExist = true;
+                                    break;
+                                }
+                            }
+                            if (!alreadyExist) {
+                                userWrongBooks[currentUser].push_back(w);
+                                saveUserWrongBook(currentUser);   // 立即保存到文件
+                            }
+                           
+                        }
+
+                        answered = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 显示正确答案
+        settextcolor(BLACK);
+        outtextxy(180, 555, (_T("正确答案：") + (engToChn ? w.chn : w.eng)).c_str());
+        settextcolor(BLUE);
+      
+        FlushBatchDraw();
+
+        while (true) {
+            ExMessage msg = getmessage(EX_MOUSE | EX_KEY);
+            if (msg.message == WM_LBUTTONDOWN || msg.message == WM_KEYDOWN) break;
+        }
+    }
+
+    EndBatchDraw();
+    MessageBox(GetHWnd(), _T("本次背诵结束！"), _T("完成"), MB_OK);
+}
+
