@@ -595,3 +595,246 @@ void cutMeat() {
     }
 }
 
+// 炸薯条
+void fryFries() {
+    if (inventory[FRIES] < INVENTORY_MAX && inventory[POTATO] > 0) {
+        // 用土豆制作薯条
+        int need = INVENTORY_MAX - inventory[FRIES];
+        int use = min(need, inventory[POTATO]);
+        inventory[POTATO] -= use;
+        inventory[FRIES] += use;
+        cout << "用" << use << "个土豆炸了" << use << "份薯条！\n";
+    }
+    else if (inventory[FRIES] >= INVENTORY_MAX) {
+        cout << "薯条库存已满，不需要炸！\n";
+    }
+    else {
+        cout << "没有土豆了！\n";
+    }
+}
+
+// 补货
+void restockItem(int item) {
+    switch (item) {
+    case 1: // 面饼和纸
+        inventory[BREAD] = INVENTORY_MAX;
+        inventory[WRAPPER] = INVENTORY_MAX;
+        cout << "面饼和包装纸已补满！\n";
+        break;
+    case 2: // 配料
+        inventory[CUCUMBER] = INVENTORY_MAX;
+        inventory[SAUCE] = INVENTORY_MAX;
+        inventory[FRIES_ING] = INVENTORY_MAX;
+        inventory[KETCHUP] = INVENTORY_MAX;
+        cout << "所有配料已补满！\n";
+        break;
+    case 3: // 盒子和杯子
+        inventory[FRIES_BOX] = INVENTORY_MAX;
+        inventory[COLA_CUP] = INVENTORY_MAX;
+        inventory[COLA] = INVENTORY_MAX;
+        cout << "薯条盒和可乐杯和可乐液已补满！\n";
+        break;
+    }
+}
+
+// 处理命令
+void processCommand(char cmd) {
+    bool success = false;
+
+    switch (cmd) {
+        // 卷饼制作
+    case '1': success = makeBurritoStep(1); break;
+    case '2': success = makeBurritoStep(2); break;
+    case '3': success = makeBurritoStep(3); break;
+    case '4': success = makeBurritoStep(4); break;
+    case '5': success = makeBurritoStep(5); break;
+    case '6': success = makeBurritoStep(6); break;
+    case '7': success = makeBurritoStep(7); break;
+    case '8': success = makeBurritoStep(8); break;
+    case '9': // 给顾客(卷饼)
+        if (customerCount > 0 && burritoStage == 4) {
+            // 只检查第一个顾客
+            if (customerWantsBurrito[0]) {
+                bool match = true;
+                for (int i = 0; i < 5; i++) {
+                    if (customerBurritoNeed[i][0] && !burritoIngredients[i]) {
+                        match = false;
+                        break;
+                    }
+                }
+                if (match) {
+                    success = serveCustomer(0);
+                }
+            }
+            if (!success) cout << "卷饼不符合顾客要求！\n";
+        }
+        else {
+            cout << "没有顾客或卷饼未完成！\n";
+        }
+        break;
+        // 薯条制作
+    case 'a': success = makeFriesStep(1); break;
+    case 'b': success = makeFriesStep(2); break;
+    case 'c': // 给顾客(薯条)
+        if (customerCount > 0) {
+            for (int i = 0; i < customerCount; i++) {
+                if (customerWantsFries[i] && friesStage == 2) {
+                    if (serveCustomer(i)) {
+                        success = true;
+                        break;
+                    }
+                }
+            }
+            if (!success) cout << "没有符合条件的顾客！\n";
+        }
+        break;
+
+        // 可乐制作
+    case 'd': success = makeColaStep(1); break;
+    case 'e': success = makeColaStep(2); break;
+    case 'f': // 给顾客(可乐)
+        if (customerCount > 0) {
+            for (int i = 0; i < customerCount; i++) {
+                if (customerWantsCola[i] && colaStage == 2) {
+                    if (serveCustomer(i)) {
+                        success = true;
+                        break;
+                    }
+                }
+            }
+            if (!success) cout << "没有符合条件的顾客！\n";
+        }
+        break;
+
+        // 库存管理
+    case 'z': cutMeat(); success = true; break;
+    case 'x': fryFries(); success = true; break;
+    case 'r': restockItem(1); success = true; break;
+    case 't': restockItem(2); success = true; break;
+    case 'y': restockItem(3); success = true; break;
+
+        // 其他
+    case 'h': showHelp(); success = true; break;
+    case '0': currentTime = 0; success = true; break;
+    case '`':  // 重置卷饼台（退格键旁边的键）
+        if (burritoStage > 0) {
+            // 退还所有已用材料
+            if (burritoStage >= 1) {
+                // 退还面饼
+                inventory[BREAD]++;
+            }
+            // 退还所有配料
+            if (burritoIngredients[0]) inventory[MEAT]++;
+            if (burritoIngredients[1]) inventory[CUCUMBER]++;
+            if (burritoIngredients[2]) inventory[SAUCE]++;
+            if (burritoIngredients[3]) inventory[FRIES_ING]++;
+            if (burritoIngredients[4]) inventory[KETCHUP]++;
+            // 退还包装纸
+            if (burritoStage == 4) inventory[WRAPPER]++;
+
+            // 重置状态
+            burritoStage = 0;
+            for (int i = 0; i < 5; i++) burritoIngredients[i] = 0;
+
+            cout << ">> 卷饼台已重置，材料已退还！\n";
+            success = true;
+        }
+        break;
+
+    case '~':  // 重置小吃台（Shift+`键）
+        // 重置薯条台
+        if (friesStage > 0) {
+            if (friesStage >= 1) inventory[FRIES_BOX]++;
+            if (friesStage == 2) inventory[FRIES]++;
+            friesStage = 0;
+            cout << ">> 薯条台已重置！\n";
+            success = true;
+        }
+        // 重置可乐台
+        if (colaStage > 0) {
+            if (colaStage >= 1) inventory[COLA_CUP]++;
+            if (colaStage == 2) inventory[COLA]++;
+            colaStage = 0;
+            cout << ">> 可乐台已重置！\n";
+            success = true;
+        }
+        break;
+    default:
+        cout << "无效指令！输入'h'查看帮助\n";
+        return;
+    }
+
+    if (success && cmd != 'h') {
+        cout << "操作成功！\n";
+    }
+    else if (!success && cmd >= '1' && cmd <= '9') {
+        cout << "操作失败！检查库存或步骤顺序！\n";
+    }
+}
+
+// 主游戏循环
+void playGame() {
+    initGame();
+    currentDay = ++totalDays;
+
+    // 生成第一个顾客
+    generateCustomer();
+
+    while (currentTime > 0) {
+        // 确保始终有顾客
+        int maxCustomers = (shopLevel & 4) ? 3 : 1;
+        if (customerCount == 0) {
+            generateCustomer();  // 如果没有顾客，立即生成一个
+        }
+
+        showGameScreen();
+        showHelp();
+
+        cout << "\n请输入指令: ";
+        char cmd;
+        cin >> cmd;
+
+        processCommand(cmd);
+
+        if (cmd != 'h') {
+            updateGame();  // 这里也可能生成新顾客
+        }
+
+        if (currentTime <= 0) break;
+
+        cout << "\n按回车键继续...";
+        cin.ignore();
+        cin.get();
+    }
+}
+
+// 主函数
+int main() {
+    srand((unsigned int)time(0));
+
+    while (true) {
+        showMainMenu();
+
+        int choice;
+        cin >> choice;
+
+        switch (choice) {
+        case 1:
+            playGame();
+            break;
+        case 2:
+        case 3:
+        case 4:
+            showUpgradeMenu();
+            break;
+        case 5:
+            cout << "感谢游玩沙威玛传奇！再见！\n";
+            return 0;
+        default:
+            cout << "无效选项！\n";
+            Sleep(1000);
+        }
+    }
+
+    return 0;
+}
