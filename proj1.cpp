@@ -780,6 +780,7 @@ void playGame() {
     // 生成第一个顾客
     generateCustomer();
 
+    
     while (currentTime > 0) {
         // 确保始终有顾客
         int maxCustomers = (shopLevel & 4) ? 3 : 1;
@@ -792,7 +793,7 @@ void playGame() {
 
         cout << "\n请输入指令: ";
         char cmd;
-        
+
         cin >> cmd;
 
         processCommand(cmd);
