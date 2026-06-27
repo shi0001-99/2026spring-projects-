@@ -792,6 +792,7 @@ void playGame() {
 
         cout << "\n请输入指令: ";
         char cmd;
+        
         cin >> cmd;
 
         processCommand(cmd);
