@@ -774,7 +774,6 @@ void processCommand(char cmd) {
 
 
 
-
 // 主游戏循环
 void playGame() {
     initGame();
