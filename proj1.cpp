@@ -794,7 +794,6 @@ void playGame() {
         if (cmd != 'h') {
             updateGame();  // 这里也可能生成新顾客
         }
-
         if (currentTime <= 0) break;
 
         cout << "\n按回车键继续...";
