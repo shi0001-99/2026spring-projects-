@@ -771,7 +771,6 @@ void processCommand(char cmd) {
         cout << "操作失败！检查库存或步骤顺序！\n";
     }
 }
-
 // 主游戏循环
 void playGame() {
     initGame();
