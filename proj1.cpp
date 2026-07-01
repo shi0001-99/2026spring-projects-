@@ -783,7 +783,6 @@ void playGame() {
         if (customerCount == 0) {
             generateCustomer();  // 如果没有顾客，立即生成一个
         }
-
         showGameScreen();
         showHelp();
 
