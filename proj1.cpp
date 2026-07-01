@@ -792,7 +792,6 @@ void playGame() {
         char cmd;
 
         cin >> cmd;
-
         processCommand(cmd);
         if (cmd != 'h') {
             updateGame();  // 这里也可能生成新顾客
