@@ -777,7 +777,6 @@ void playGame() {
     currentDay = ++totalDays;
     // 生成第一个顾客
     generateCustomer();
-
     while (currentTime > 0) {
         // 确保始终有顾客
         int maxCustomers = (shopLevel & 4) ? 3 : 1;
