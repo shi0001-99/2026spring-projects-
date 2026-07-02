@@ -775,7 +775,6 @@ void saveCart() {
     file.close();
 }
 
-
 void loadCart() {
     if (!currentUser) return;
     currentCart.clear();
