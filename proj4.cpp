@@ -798,7 +798,6 @@ void loadCart() {
 void loadOrders() {  }
 void saveOrders() {  }
 
-
 int main() {
     loadUsers();
     loadProducts();
