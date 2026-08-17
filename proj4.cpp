@@ -722,6 +722,7 @@ void loadUsers() {
     }
     file.close();
 }
+
 // ====================== 商品文件操作======================
 void saveProducts() {
     ofstream file("products.txt");
