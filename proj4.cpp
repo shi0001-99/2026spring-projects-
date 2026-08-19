@@ -607,6 +607,7 @@ void userMenu() {
         cout << "0. 退出登录\n";
         cout << "请选择: ";
         
+        
         int choice; cin >> choice;
 
         if (choice == 1) showProducts();
