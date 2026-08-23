@@ -695,8 +695,6 @@ void saveUsers() {
     file.close();
 }
 
-
-
 void loadUsers() {
     users.clear();
     ifstream file("users.txt");
